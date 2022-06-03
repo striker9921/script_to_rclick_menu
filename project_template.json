@@ -1,12 +1,12 @@
 {
     "templates": {
+        "Select a Template..." : {},
         "template a" : {
             "file a in template a" : {},
             "file b in template a" : {},
             "file c in template a" : {
                 "nested file in template a": {}
             }
-        },
-        "template b" : {}
+        }
     }
 }
