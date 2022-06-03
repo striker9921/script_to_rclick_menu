@@ -6,7 +6,13 @@
 import os
 import sys
 import winreg
+import ctypes
 
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
 
 def main():
     # create variables for basic paths
@@ -16,17 +22,21 @@ def main():
     # create variables for information about the script to be added
     script_action = "Create_New_Project"
     script_description = "&" + " ".join(script_action.split('_'))
-    script_to_add = f'"{cwd}\\file_organiser.py"'
+    script_to_add = f'"{cwd}\\new_project.pyw"'
 
     # Registry path for windows right click context menu items.
-    key_path = r"Directory\\Background\\shell\\Organiser"
+    key_path = r"Directory\\Background\\shell\\" + script_action
 
     # Create a folder for the script to add.
     key = winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, key_path)
-    winreg.SetValue(key, '', winreg.REG_SZ, script_description)
+    winreg.SetValue(key, "", winreg.REG_SZ, script_description)
 
     key1 = winreg.CreateKey(key, r"command")
-    winreg.SetValue(key1, winreg.REG_SZ, python_exe + script_to_add)
+    winreg.SetValue(key1, "", winreg.REG_SZ, python_exe + " " + script_to_add)
 
 if __name__ == "__main__":
-    main()
+    if is_admin():
+        main()
+    else:
+        # Re-run the program with admin rights
+        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
