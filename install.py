@@ -14,10 +14,19 @@ def is_admin():
     except:
         return False
 
+def find_python():
+    python_path = sys.executable
+    python_dir = os.path.dirname(python_path)
+    pythonw_path = os.path.join(python_dir, "pythonw.exe")
+    if os.path.exists(pythonw_path):
+        return pythonw_path
+    else:
+        return python_path
+
 def main():
     # create variables for basic paths
     cwd = os.getcwd()
-    python_exe = sys.executable
+    python_exe = find_python()
 
     # create variables for information about the script to be added
     script_action = "Create_New_Project"
