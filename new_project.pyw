@@ -64,7 +64,10 @@ class Ui(QtWidgets.QDialog):
     def createFiles(self):
         complete_project_path = os.path.join(self.project_path, self.project_name)
         os.mkdir(complete_project_path)
-        
+        for i in range(self.InnerFolderList.count()):
+            item = self.InnerFolderList.item(i)
+            if (item.checkState() == QtCore.Qt.CheckState.Checked):
+                os.mkdir(os.path.join(complete_project_path, item.text()))
         self.quit()
 
     def quit(self):
@@ -76,9 +79,10 @@ class Ui(QtWidgets.QDialog):
             self.template.append(line[:-1])
         fp.close()
 
-    def add_inner_folder(self, name="NewInnerFolder"):
+    def add_inner_folder(self, name):
         # Credit: https://stackoverflow.com/questions/22340514/qt-designer-qlistwidget-checkbox
         new_item = QtWidgets.QListWidgetItem()
+        if(name == False) : name = str(self.InnerFolderList.count())
         new_item.setText(name)
         new_item.setFlags(new_item.flags() | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEditable)
         new_item.setCheckState(QtCore.Qt.Checked)
