@@ -16,7 +16,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
 
     project_name = "New Project"
-    project_path = ""
+    project_path = os.getcwd()
 
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
@@ -235,7 +235,7 @@ class Ui_Dialog(object):
             self.updateFinalProjectPath()
 
     def updateFinalProjectPath(self):
-        self.FinalProjectPathLabel.setText(self.project_path + "/" + self.project_name)
+        self.FinalProjectPathLabel.setText(os.path.join(self.project_path,self.project_name))
 
     def createFiles(self):
         complete_project_path = os.path.join(self.project_path, self.project_name)
