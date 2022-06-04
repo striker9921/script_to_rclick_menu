@@ -8,13 +8,14 @@ class Ui(QtWidgets.QMainWindow):
     project_name = "New Project"
     project_path = os.getcwd()
     template = {}
+    script_dir = os.path.dirname(__file__)
 
     def __init__(self):
         # Call inherited constructor
         super(Ui, self).__init__()
         
         # Load .ui file
-        self.ui = uic.loadUi("new_project.ui", self)
+        self.ui = uic.loadUi(os.path.join(self.script_dir, "new_project.ui"), self)
         
         # Find ui objects that will be used and assign to a variable
         self.ProjectNameLineEdit = self.ui.findChild(QtWidgets.QLineEdit, "ProjectNameLineEdit")
@@ -80,7 +81,7 @@ class Ui(QtWidgets.QMainWindow):
         sys.exit(0)
 
     def read_default(self):
-        fp = open("project_template.json", "r")
+        fp = open(os.path.join(self.script_dir, "project_template.json"), "r")
         self.template = json.load(fp)["templates"]
         fp.close()
 
@@ -91,6 +92,7 @@ class Ui(QtWidgets.QMainWindow):
         self.FileTree.setHeaderLabel("New Project")
 
     def load_template(self):
+        self.FileTree.clear()
         template_key = self.SelectTemplate.currentText()
         if(template_key == ""): 
             return
