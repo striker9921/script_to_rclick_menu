@@ -1,19 +1,17 @@
 import os
 import sys
+import json
 
 from PyQt5 import QtCore, QtWidgets, uic
 
-class Ui(QtWidgets.QDialog):
+class Ui(QtWidgets.QMainWindow):
     project_name = "New Project"
     project_path = os.getcwd()
-    template = []
+    template = {}
 
     def __init__(self):
         # Call inherited constructor
         super(Ui, self).__init__()
-        
-        # Read default template
-        self.read_default()
         
         # Load .ui file
         self.ui = uic.loadUi("new_project.ui", self)
@@ -22,9 +20,11 @@ class Ui(QtWidgets.QDialog):
         self.ProjectNameLineEdit = self.ui.findChild(QtWidgets.QLineEdit, "ProjectNameLineEdit")
         self.SelectPathButton = self.ui.findChild(QtWidgets.QPushButton, "SelectPathButton")
         self.FinalProjectPathLabel = self.ui.findChild(QtWidgets.QLabel, "FinalProjectPathLabel")
-        self.InnerFolderList = self.ui.findChild(QtWidgets.QListWidget, "InnerFolderList")
-        self.AddInnerFolder = self.ui.findChild(QtWidgets.QPushButton, "AddInnerFolder")
-        self.RemoveInnerFolder = self.ui.findChild(QtWidgets.QPushButton, "RemoveInnerFolder")
+        self.FileTree = self.ui.findChild(QtWidgets.QTreeWidget, "FileTree")
+        self.SelectTemplate = self.ui.findChild(QtWidgets.QComboBox, "SelectTemplate")
+        self.AddFolder = self.ui.findChild(QtWidgets.QPushButton, "AddFolder")
+        self.AddSubFolder = self.ui.findChild(QtWidgets.QPushButton, "AddSubFolder")
+        self.RemoveFolder = self.ui.findChild(QtWidgets.QPushButton, "RemoveFolder")
         self.ConfirmBox = self.ui.findChild(QtWidgets.QDialogButtonBox, "ConfirmBox")
         
         # Connect ui actions to defined functions
@@ -32,12 +32,13 @@ class Ui(QtWidgets.QDialog):
         self.SelectPathButton.clicked.connect(self.updateProjectPath)
         self.ConfirmBox.accepted.connect(self.createFiles)
         self.ConfirmBox.rejected.connect(self.quit)
-        self.AddInnerFolder.clicked.connect(self.add_inner_folder)
-        self.RemoveInnerFolder.clicked.connect(self.remove_selected_folder)
-
-        # Add Default Inner Folders
-        for folder in self.template:
-            self.add_inner_folder(folder)
+        self.AddFolder.clicked.connect(self.add_folder)
+        self.AddSubFolder.clicked.connect(self.add_sub_folder)
+        self.RemoveFolder.clicked.connect(self.remove_selected_folder)
+        self.SelectTemplate.currentTextChanged.connect(self.load_template)
+        
+        # Read default template
+        self.read_default()
 
         self.updateFinalProjectPath()
 
@@ -50,12 +51,13 @@ class Ui(QtWidgets.QDialog):
             self.project_name = "New Project"
         else:
             self.project_name = temp
+        self.FileTree.setHeaderLabel(self.project_name)
         self.updateFinalProjectPath()
 
     def updateProjectPath(self):
         temp = QtWidgets.QFileDialog.getExistingDirectory()
         if temp != "": 
-            self.project_path = temp
+            self.project_path = "\\".join(temp.split("/"))
             self.updateFinalProjectPath()
 
     def updateFinalProjectPath(self):
@@ -64,37 +66,93 @@ class Ui(QtWidgets.QDialog):
     def createFiles(self):
         complete_project_path = os.path.join(self.project_path, self.project_name)
         os.mkdir(complete_project_path)
-        for i in range(self.InnerFolderList.count()):
-            item = self.InnerFolderList.item(i)
-            if (item.checkState() == QtCore.Qt.CheckState.Checked):
-                os.mkdir(os.path.join(complete_project_path, item.text()))
+        for i in range(self.FileTree.invisibleRootItem().childCount()):
+            self.createFilesRecur(self.FileTree.invisibleRootItem().child(i), complete_project_path)            
         self.quit()
+    
+    def createFilesRecur(self, root, path):
+        cur_path = os.path.join(path, root.text(0))
+        os.mkdir(cur_path)
+        for i in range(root.childCount()):
+            self.createFilesRecur(root.child(i), cur_path)
 
     def quit(self):
         sys.exit(0)
 
     def read_default(self):
-        fp = open("project_template.txt", "r")
-        for line in fp:
-            self.template.append(line[:-1])
+        fp = open("project_template.json", "r")
+        self.template = json.load(fp)["templates"]
         fp.close()
 
-    def add_inner_folder(self, name):
-        # Credit: https://stackoverflow.com/questions/22340514/qt-designer-qlistwidget-checkbox
-        new_item = QtWidgets.QListWidgetItem()
-        if(name == False) : name = str(self.InnerFolderList.count())
-        new_item.setText(name)
-        new_item.setFlags(new_item.flags() | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEditable)
-        new_item.setCheckState(QtCore.Qt.Checked)
-        self.InnerFolderList.addItem(new_item)
+        self.SelectTemplate.clear()
+        for key in self.template:
+            self.SelectTemplate.addItem(key)
+        self.FileTree.clear()
+        self.FileTree.setHeaderLabel("New Project")
+
+    def load_template(self):
+        template_key = self.SelectTemplate.currentText()
+        if(template_key == ""): 
+            return
+        
+        selected_template = self.template[template_key]
+        for item in selected_template:
+            new_item = QtWidgets.QTreeWidgetItem()
+            new_item.setText(0, item)
+            new_item.setFlags(new_item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
+            self.load_template_recur(selected_template[item], new_item)
+            self.FileTree.addTopLevelItem(new_item)
+
+    def load_template_recur(self, template, root):
+        for item in template:
+            new_item = QtWidgets.QTreeWidgetItem()
+            new_item.setText(0, item)
+            new_item.setFlags(new_item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
+            self.load_template_recur(template[item], new_item)
+            root.addChild(new_item)
+
+    def add_folder(self, name):
+        new_item = QtWidgets.QTreeWidgetItem()
+        new_item.setFlags(new_item.flags() | QtCore.Qt.ItemIsEditable)
+
+        current_items = self.FileTree.selectedItems()
+        if not current_items:
+            if(name == False) : name = str(self.FileTree.topLevelItemCount())
+            new_item.setText(0, name)
+            self.FileTree.addTopLevelItem(new_item)
+        else:
+            parent = current_items[0].parent()
+            if not parent:
+                if(name == False) : name = str(self.FileTree.topLevelItemCount())
+                new_item.setText(0, name)
+                self.FileTree.addTopLevelItem(new_item)
+            else:    
+                if(name == False) : name = str(parent.childCount())
+                new_item.setText(0, name)
+                parent.addChild(new_item)
+
+    def add_sub_folder(self, name):
+        new_item = QtWidgets.QTreeWidgetItem()
+        new_item.setFlags(new_item.flags() | QtCore.Qt.ItemIsEditable)
+
+        current_items = self.FileTree.selectedItems()
+        if not current_items:
+            if(name == False) : name = str(self.FileTree.topLevelItemCount())
+            new_item.setText(0, name)
+            self.FileTree.addTopLevelItem(new_item)
+        else:
+            current_item = current_items[0]
+            if(name == False) : name = str(current_item.childCount())
+            new_item.setText(0, name)
+            current_item.addChild(new_item)
         
     def remove_selected_folder(self):
-        # Credit: https://stackoverflow.com/questions/23835847/how-to-remove-item-from-qlistwidget#:~:text=removeItemWidget%20doesn't%20remove%20item,an%20item%20from%20the%20list.
-        listItems = self.InnerFolderList.selectedItems()
-        if not listItems: return        
-        for item in listItems:
-            self.InnerFolderList.takeItem(self.InnerFolderList.row(item))
-
+        selected_items = self.FileTree.selectedItems()
+        if not selected_items:
+            return
+        parent = selected_items[0].parent()
+        if not parent: parent = self.FileTree.invisibleRootItem()
+        parent.removeChild(selected_items[0])
 
 
 def main():
