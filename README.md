@@ -1,11 +1,31 @@
 # Script To Rclick Menu Project
 
-This project aims to automate the adding of a pythong script to the windows context menu.
+## Features
 
-# Project expanded:
+ - Add a python script into the windows right click context menu.
+ - Create a new project folder with inner folders with one click.
+ - Read templates file for different project types.
+ - Edit list of folders to be created.
 
-A new script is needed in order to utilize the install.py script. A python GUI application will be designed to create a simple project folder heiarchy. The user is able to select a project path and a new project name along with some starting directories in the project. This application will read default project formats and the user is able to customize the default project template before creating all of the directories.
+## Dependencies
 
-# Project expanded:
+ - Python 3
+ - pyqt5 package (pip install pyqt5)
 
-Improve formating to use JSON files as templates. Add dropdown menu to choose a template. Add ability to create nested directories.
+## Usage
+
+ - Run install.py (will ask for admin).
+ - Right click in any folder and click "Create New Project".
+ - Select template and/or edit folders to create.
+     - Edit project name
+     - Edit project path
+     - Edit folder names
+     - Add/remove sub-folders
+ - Click OK.
+
+## Screenshots
+
+![Run install.py](https://github.com/striker9921/script_to_rclick_menu/blob/master/screenshots/run_install.PNG)
+![Right click menu](https://github.com/striker9921/script_to_rclick_menu/blob/master/screenshots/right_click_menu.PNG)
+![Select template](https://github.com/striker9921/script_to_rclick_menu/blob/master/screenshots/select_template.png)
+![Edit folders](https://github.com/striker9921/script_to_rclick_menu/blob/master/screenshots/edit_folders.png)
